@@ -20,7 +20,7 @@ import figures from '@inquirer/figures';
 import ansiEscapes from 'ansi-escapes';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { getLengthWithChalk } from '../utilities/converters.mjs';
+import { getLengthWithChalk } from '../utilities/converters.js';
 
 const defualtTheme = {
   prefix: chalk.red.underline(figures.warning),

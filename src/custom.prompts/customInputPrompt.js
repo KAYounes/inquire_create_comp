@@ -1,7 +1,7 @@
 import { createPrompt, useState, useKeypress, usePrefix, isEnterKey, isBackspaceKey, makeTheme } from '@inquirer/core';
 import figures from '@inquirer/figures';
 import chalk from 'chalk';
-import { getLengthWithChalk } from '../utilities/converters.mjs';
+import { getLengthWithChalk } from '../utilities/converters.js';
 const CustomInputPrompt = createPrompt((config, done) => {
   // if (!config.when) {
   //   done();

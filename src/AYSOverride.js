@@ -1,6 +1,6 @@
-import AreYourSurePrompt from './custom.prompts/areYouSurePrompt.mjs';
+import AreYourSurePrompt from './custom.prompts/areYouSurePrompt.js';
 import chalk from 'chalk';
-import CustomInputPrompt from './custom.prompts/customInputPrompt.mjs';
+import CustomInputPrompt from './custom.prompts/customInputPrompt.js';
 
 export default async function AYSOverride(componentName) {
   const confirm = await AreYourSurePrompt({

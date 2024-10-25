@@ -1,5 +1,5 @@
 import inquirer from 'inquirer';
-import CustomInputPrompt from '../customInputPrompt.mjs';
+import CustomInputPrompt from '../customInputPrompt.js';
 
 inquirer.registerPrompt('c_input', CustomInputPrompt);
 
