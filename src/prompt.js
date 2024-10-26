@@ -40,7 +40,7 @@ export default async function start(COMPONENT_CONFIG, answerd) {
     message: 'Component Name:',
     help: 'as a single word [SidebarMenu], or separated words [sidebar menu]',
     required: true,
-    default: answerd.COMPONENT_NAME || COMPONENT_CONFIG.COMPONENT_NAME,
+    default: answerd?.COMPONENT_NAME || COMPONENT_CONFIG.COMPONENT_NAME,
     theme: { ...globalTheme },
     validate: (input) => isValidFunctionName(toFunctionName(input)),
     filter: function (input) {

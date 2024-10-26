@@ -9,6 +9,8 @@ import AYSOverride from './src/AYSOverride.js';
 import { __dirname, getFileContent } from './src/utilities/file.system.js';
 import { pathToFileURL } from 'url';
 import chalk from 'chalk';
+import { Command } from 'commander';
+import { returnIfValue } from './src/utilities/helpers.js';
 
 // component related properties
 const COMPONENT = {
@@ -37,6 +39,8 @@ let COMPONENT_CONFIG = {
   // ...COMPONENT_USER_CONFIG
 };
 
+const configFileName = 'create.comp.config.js';
+
 const PATHS = {
   package_dir: path.join(__dirname),
   package_src: path.join(__dirname, 'src'),
@@ -50,20 +54,28 @@ PATHS.template_index = path.join(PATHS.template_root, 'index.js');
 
 PATHS.component_root_dir = path.join(PATHS.source_src, 'components');
 
+PATHS.config_path = path.join(PATHS.source_dir, configFileName);
+
 // Execute the function
 async function main() {
+  const [nameTokens, createConfigFile] = parseCLI();
+
+  processConfigFileCreation(createConfigFile);
   // get user configurations from config file
   const COMPONENT_USER_CONFIG = await getConfigFile();
-
-  // prompt the user for configurations not found in the config.js file
-  // start(defaults, answers)
-  await start(COMPONENT_CONFIG, COMPONENT_USER_CONFIG);
 
   // generate the final configrations
   COMPONENT_CONFIG = {
     ...COMPONENT_CONFIG,
     ...COMPONENT_USER_CONFIG,
+    COMPONENT_NAME: nameTokens.join(' '),
   };
+
+  COMPONENT_CONFIG.COMPONENT_NAME = returnIfValue(nameTokens.join(' '), COMPONENT_CONFIG.COMPONENT_NAME);
+
+  // prompt the user for configurations not found in the config.js file
+  // start(defaults, answers)
+  await start(COMPONENT_CONFIG, COMPONENT_USER_CONFIG);
 
   COMPONENT_CONFIG.COMPONENT_NAME = toUpperCamelCase(COMPONENT_CONFIG.COMPONENT_NAME);
   COMPONENT_CONFIG.CSS_FILE_AS_MODULE = COMPONENT_CONFIG.CSS_FILE_AS_MODULE ? '.module' : '';
@@ -92,23 +104,19 @@ async function main() {
   if (COMPONENT_CONFIG.CREATE_CSS_FILE) processCSSFileCreation();
 }
 
-// main();
-addConfigFile();
+main();
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
-function addConfigFile() {
-  const dest = path.join(PATHS.source_dir, 'create_comp.config.js');
-  const temp = path.join(PATHS.template_root, 'create_comp.config.js');
-  console.log(dest, temp);
+function parseCLI() {
+  const program = new Command();
 
-  const exists = fs.existsSync(dest);
-  console.log(exists);
+  program.argument('<tokens>', 'Name tokens').option('-a, --addConfig', 'Optional name argument').parse(process.argv);
 
-  const content = getFileContent(temp);
-  console.log(content);
-
-  fs.writeFileSync(dest, content, 'utf-8');
+  const nameTokens = program.args; //
+  const createConfig = program.opts().addConfig;
+  console.log(nameTokens, createConfig);
+  return [nameTokens, createConfig ?? false];
 }
 
 async function processComponentFileCreation() {
@@ -191,8 +199,24 @@ function processCSSFileCreation() {
   }
 }
 
+async function processConfigFileCreation(createFile) {
+  try {
+    if (createFile) {
+      if (fs.existsSync(PATHS.config_path)) return;
+      const destination = path.join(PATHS.source_dir, 'create_comp.config.js');
+      const template = path.join(PATHS.template_root, 'create_comp.config.js');
+
+      const content = getFileContent(template);
+      fs.writeFileSync(destination, content, 'utf-8');
+    }
+  } catch (error) {
+    console.error('Error processing file:', error);
+  }
+}
+
 async function getConfigFile() {
-  const pathToConfigFile = pathToFileURL(path.join(PATHS.source_dir, 'create.comp.config.js')).href;
+  if (!fs.existsSync(PATHS.config_path)) return;
+  const pathToConfigFile = pathToFileURL(PATHS.config_path).href;
 
   return (await import(pathToConfigFile)).default;
 }
