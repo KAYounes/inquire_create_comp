@@ -1,10 +1,9 @@
 #!/usr/bin/env node
-import start from './src/prompt.js';
+import startPrompting from './src/prompt.js';
 import { toLowerCamelCase, toUpperCamelCase } from './src/utilities/converters.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { stdin } from 'process';
 import AYSOverride from './src/AYSOverride.js';
 import { __dirname, getFileContent } from './src/utilities/file.system.js';
 import { pathToFileURL } from 'url';
@@ -56,11 +55,16 @@ PATHS.component_root_dir = path.join(PATHS.source_src, 'components');
 
 PATHS.config_path = path.join(PATHS.source_dir, configFileName);
 
-// Execute the function
+/////////////////////////////
+// MAIN
+/////////////////////////////
 async function main() {
   const [nameTokens, createConfigFile] = parseCLI();
 
-  processConfigFileCreation(createConfigFile);
+  const fileCreated = processConfigFileCreation(createConfigFile);
+
+  if (fileCreated) return;
+
   // get user configurations from config file
   const COMPONENT_USER_CONFIG = await getConfigFile();
 
@@ -68,14 +72,18 @@ async function main() {
   COMPONENT_CONFIG = {
     ...COMPONENT_CONFIG,
     ...COMPONENT_USER_CONFIG,
-    COMPONENT_NAME: nameTokens.join(' '),
   };
 
   COMPONENT_CONFIG.COMPONENT_NAME = returnIfValue(nameTokens.join(' '), COMPONENT_CONFIG.COMPONENT_NAME);
 
+  console.log({
+    COMPONENT_CONFIG,
+    COMPONENT_USER_CONFIG,
+  });
+  return;
   // prompt the user for configurations not found in the config.js file
-  // start(defaults, answers)
-  await start(COMPONENT_CONFIG, COMPONENT_USER_CONFIG);
+  // startPrompting(globalConfigs (used as default), answers)
+  await startPrompting(COMPONENT_CONFIG, COMPONENT_USER_CONFIG);
 
   COMPONENT_CONFIG.COMPONENT_NAME = toUpperCamelCase(COMPONENT_CONFIG.COMPONENT_NAME);
   COMPONENT_CONFIG.CSS_FILE_AS_MODULE = COMPONENT_CONFIG.CSS_FILE_AS_MODULE ? '.module' : '';
@@ -111,7 +119,7 @@ main();
 function parseCLI() {
   const program = new Command();
 
-  program.argument('<tokens>', 'Name tokens').option('-a, --addConfig', 'Optional name argument').parse(process.argv);
+  program.argument('[tokens]', 'Name tokens').option('-a, --addConfig', 'Optional name argument').parse(process.argv);
 
   const nameTokens = program.args; //
   const createConfig = program.opts().addConfig;
@@ -202,12 +210,13 @@ function processCSSFileCreation() {
 async function processConfigFileCreation(createFile) {
   try {
     if (createFile) {
-      if (fs.existsSync(PATHS.config_path)) return;
-      const destination = path.join(PATHS.source_dir, 'create_comp.config.js');
-      const template = path.join(PATHS.template_root, 'create_comp.config.js');
+      if (fs.existsSync(PATHS.config_path)) return false;
+      const destination = path.join(PATHS.source_dir, configFileName);
+      const template = path.join(PATHS.template_root, configFileName);
 
       const content = getFileContent(template);
       fs.writeFileSync(destination, content, 'utf-8');
+      return true;
     }
   } catch (error) {
     console.error('Error processing file:', error);
@@ -215,8 +224,13 @@ async function processConfigFileCreation(createFile) {
 }
 
 async function getConfigFile() {
-  if (!fs.existsSync(PATHS.config_path)) return;
-  const pathToConfigFile = pathToFileURL(PATHS.config_path).href;
+  console.log(`PATHS.config_path ${PATHS.config_path}`);
+  console.log(`fs.existsSync(PATHS.config_path) ${fs.existsSync(PATHS.config_path)}`);
 
-  return (await import(pathToConfigFile)).default;
+  if (!fs.existsSync(PATHS.config_path)) return;
+
+  const fileURL = pathToFileURL(PATHS.config_path).href;
+
+  console.log(`fileURL ${fileURL}`);
+  return (await import(fileURL)).default;
 }

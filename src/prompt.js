@@ -21,7 +21,7 @@ const globalTheme = {
   },
 };
 
-export default async function start(COMPONENT_CONFIG, answerd) {
+export default async function startPrompting(COMPONENT_CONFIG, answerd) {
   // Capture keypress events to exit on Escape
   stdin.setRawMode(true);
   stdin.resume();
