@@ -1,4 +1,6 @@
 import chalk from 'chalk';
+import { I } from './helpers.js';
+import { getLengthWithChalk } from './converters.js';
 
 const logDisabled = false;
 
@@ -14,7 +16,7 @@ function notifyLogDisabled() {
 const terminalWidth = process.stdout.columns;
 
 console.log('Terminal width:', terminalWidth);
-const message = 'Logging Is Disabled';
+const message = 'working?';
 const prefix = ' >>> ';
 const suffix = ' <<< ';
 const remaing = terminalWidth - message.length - prefix.length - suffix.length;
@@ -24,8 +26,16 @@ const remaing = terminalWidth - message.length - prefix.length - suffix.length;
 // log('-'.repeat(remaing) + prefix + message + suffix);
 // log('-'.repeat(remaing / 2) + '-'.repeat(remaing / 2));
 // log('-'.repeat(remaing / 2) + '-'.repeat(remaing / 2) + '-'.repeat(29));
-// log('-'.repeat(remaing / 2) + prefix + message + suffix + '-'.repeat(remaing / 2));
+log('-'.repeat(remaing / 2) + prefix + message + suffix + '-'.repeat(remaing / 2));
 
-function centeredLog(message, { prefix, suffix, color, prefixFill, suffixFill }) {
+export function centeredLog(message, color = I) {
   const terminalWidth = process.stdout.columns;
+  const messageLength = getLengthWithChalk(message);
+  const coloredMessageLength = message.length - messageLength;
+  console.log(messageLength);
+
+  if (typeof color !== 'function') color = I;
+
+  log(message.padStart((terminalWidth + messageLength) / 2, '-').padEnd(terminalWidth, '-'));
+  log(''.padStart((terminalWidth + messageLength) / 2).length);
 }

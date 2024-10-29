@@ -10,6 +10,7 @@ import { pathToFileURL } from 'url';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { returnIfValue } from './src/utilities/helpers.js';
+import { centeredLog } from './src/utilities/logging.js';
 
 // component related properties
 const COMPONENT = {
@@ -63,6 +64,7 @@ async function main() {
 
   const fileCreated = processConfigFileCreation(createConfigFile);
 
+  centeredLog('A', chalk.red);
   if (fileCreated) return;
 
   // get user configurations from config file
