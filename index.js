@@ -62,10 +62,20 @@ PATHS.config_path = path.join(PATHS.source_dir, configFileName);
 async function main() {
   const [nameTokens, createConfigFile] = parseCLI();
 
-  const fileCreated = processConfigFileCreation(createConfigFile);
+  const configFileLog = createConfigFile && processConfigFileCreation(createConfigFile);
 
-  centeredLog('A', chalk.red);
-  if (fileCreated) return;
+  centeredLog(
+    (fileExists ? chalk.red : chalk.green)(
+      ` >> ${
+        fileExists
+          ? `A config file with the name ${configFileName} already exists`
+          : `Added ${configFileName} to the project root directory`
+      } << `,
+    ),
+    fileExists ? chalk.red : chalk.green,
+  );
+
+  if (fileExists) return;
 
   // get user configurations from config file
   const COMPONENT_USER_CONFIG = await getConfigFile();
@@ -78,10 +88,6 @@ async function main() {
 
   COMPONENT_CONFIG.COMPONENT_NAME = returnIfValue(nameTokens.join(' '), COMPONENT_CONFIG.COMPONENT_NAME);
 
-  console.log({
-    COMPONENT_CONFIG,
-    COMPONENT_USER_CONFIG,
-  });
   return;
   // prompt the user for configurations not found in the config.js file
   // startPrompting(globalConfigs (used as default), answers)
@@ -164,6 +170,7 @@ async function processComponentFileCreation() {
     ]
       .filter((query) => query !== undefined)
       .join(os.EOL);
+
     console.log(chalk.magenta(newContent));
     if (!fs.existsSync(PATHS.component_root_dir)) {
       fs.mkdirSync(PATHS.component_root_dir);
@@ -212,6 +219,8 @@ function processCSSFileCreation() {
 async function processConfigFileCreation(createFile) {
   try {
     if (createFile) {
+      console.log(`PATHS.config_path ${PATHS.config_path}`);
+      console.log(`fs.existsSync(PATHS.config_path) ${fs.existsSync(PATHS.config_path)}`);
       if (fs.existsSync(PATHS.config_path)) return false;
       const destination = path.join(PATHS.source_dir, configFileName);
       const template = path.join(PATHS.template_root, configFileName);
@@ -226,8 +235,8 @@ async function processConfigFileCreation(createFile) {
 }
 
 async function getConfigFile() {
-  console.log(`PATHS.config_path ${PATHS.config_path}`);
-  console.log(`fs.existsSync(PATHS.config_path) ${fs.existsSync(PATHS.config_path)}`);
+  // console.log(`PATHS.config_path ${PATHS.config_path}`);
+  // console.log(`fs.existsSync(PATHS.config_path) ${fs.existsSync(PATHS.config_path)}`);
 
   if (!fs.existsSync(PATHS.config_path)) return;
 

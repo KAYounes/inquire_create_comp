@@ -49,3 +49,9 @@ export function getLengthWithChalk(str) {
   const ansiRegex = /\u001B\[[0-9;]*m/g;
   return str.replace(ansiRegex, '').length;
 }
+
+export function removeChalk(str) {
+  // Remove ANSI escape codes
+  const ansiRegex = /\u001B\[[0-9;]*m/g;
+  return str.replace(ansiRegex, '');
+}
