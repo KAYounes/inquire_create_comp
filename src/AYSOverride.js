@@ -8,7 +8,7 @@ export default async function AYSOverride(componentName) {
     message: `${chalk.underline('ARE YOU SURE')} you want to override the component [${chalk.underline.magenta(
       componentName,
     )}]`,
-    delay: 2500,
+    delay: 2000,
     loop: false,
     accept: {
       value: true,
@@ -33,8 +33,8 @@ export default async function AYSOverride(componentName) {
       },
       filter: () => true,
     });
-    console.log(final);
     return final;
   }
+
   return confirm;
 }

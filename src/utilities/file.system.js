@@ -21,3 +21,7 @@ function getFileContent(_path) {
 }
 
 export { __dirname, getFileContent };
+
+export function relativePathToProject(projectPath, absPath) {
+  return path.join('...', path.relative(path.resolve(projectPath, '..'), absPath));
+}

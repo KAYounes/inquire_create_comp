@@ -85,30 +85,35 @@ function countdownArray(milliseconds) {
 
   return countdown;
 }
+let renders = 0;
 
 const AreYourSurePrompt = createPrompt(function (config, done) {
+  renders += 1;
+  // console.log(renders);
   const { loop = true, pageSize = 7 } = config;
   const firstRender = useRef(true);
   // defualtTheme.spinner.interval = 10;
   // defualtTheme.spinner.frames = countdownArray(config.delay);
   const theme = makeTheme(defualtTheme, config.theme);
-  const [status, setStatus] = useState('loading');
+  const [status, setStatus] = useState('ideal');
   const prefix = usePrefix({ status, theme });
   const searchTimeoutRef = useRef();
   const gap = ' '.repeat(2);
-
+  setStatus('loading');
   let accept = {
     name: 'accept',
     short: 'yes',
     value: true,
     ...config.accept,
   };
+
   let decline = {
     name: 'decline',
     short: 'no',
     value: false,
     ...config.decline,
   };
+
   config.choices = [accept, decline];
 
   const items = useMemo(() => normalizeChoices(config.choices), [config.choices]);
@@ -144,12 +149,8 @@ const AreYourSurePrompt = createPrompt(function (config, done) {
 
   const [ignoreInput, setIgnoreInput] = useState(true);
 
-  // console.log(`\n\n----- ${ignoreInput} ----- \n\n`);
-
   useEffect(function () {
-    // console.log('\n 111111111111111111111');
     const id = setTimeout(() => {
-      // console.log('\n 2222222222222222222222');
       setIgnoreInput(false);
       setStatus('idle');
     }, config.delay);
@@ -158,8 +159,6 @@ const AreYourSurePrompt = createPrompt(function (config, done) {
 
   useKeypress((key, rl) => {
     clearTimeout(searchTimeoutRef.current);
-
-    // console.log(`\n\n----- ${ignoreInput} ----- \n\n`);
 
     if (ignoreInput) return;
 
@@ -259,24 +258,11 @@ const AreYourSurePrompt = createPrompt(function (config, done) {
         selectedChoice.description.split('\n').join('\n' + theme.indentation),
       )}`
     : ``;
-  // console.log('\n\n', prefix.length + 10);
   return `\n${[prefix.padEnd(prefix.length + 10 - 2), message, helpMessage, prefix.padStart(prefix.length + 10 - 2)]
     .filter((query) => query !== undefined)
     .join(
       ' ',
     )}\n${theme.indentation}${chalk.gray(figures.lineVertical)}\n${page}\n${theme.indentation}${chalk.gray(figures.lineDashed4.repeat(20))}${choiceDescription}${ansiEscapes.cursorHide}\n\n\n\n\n\n\n`;
 });
-
-// Function to handle multiple prompts
-async function promptMultiple(prompts) {
-  const results = [];
-
-  for (const promptConfig of prompts) {
-    const result = await prompt(promptConfig);
-    results.push(result);
-  }
-
-  return results;
-}
 
 export default AreYourSurePrompt;
