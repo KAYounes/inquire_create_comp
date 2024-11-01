@@ -57,9 +57,35 @@ export function centeredLog(message, color = I) {
   }
 }
 
-export function logMessage(firstLine, secondLine, flColor = chalk.gray, slColor = chalk.gray) {
-  log(`${flColor('>>')} ${firstLine}`);
-  log(`    ${slColor('\\__')}${chalk.gray(secondLine)}`);
+export function heading(message, color = I) {
+  const coloredMessage = message;
+  message = removeChalk(message);
+  const messageLength = message.length;
+
+  const lines = coloredMessage.split('\n');
+
+  log(color('#'.repeat(terminalWidth)));
+  if (typeof color !== 'function') color = I;
+  const remaining = (terminalWidth - removeChalk(lines[0]).length) / 2;
+  let sides = '#'.repeat(remaining);
+  log(color(sides) + color(lines[0]) + color(sides));
+
+  if (lines.length < 1) return;
+  for (let line of lines.slice(1)) {
+    let remaining = (terminalWidth - removeChalk(line).length) / 2;
+    let sides = ' '.repeat(remaining);
+    log(color(sides) + color(line) + color(sides));
+  }
+  log(color('#'.repeat(terminalWidth)));
+  log();
+}
+
+export function logMessage(firstLine, lines, flColor = chalk.gray, slColor = chalk.gray) {
+  log(`${flColor('>> ')} ${firstLine}`);
+  lines = lines.split('\n');
+  for (const line of lines) {
+    log(slColor(`       ${line}`));
+  }
 }
 
 export function warnLog(message) {
@@ -96,7 +122,7 @@ export function greenLog(title, message) {
 
 export function logFileCreation(fileName, relPath) {
   log();
-  greenLog(`File Created [${fileName}]`, `${fileName} created > ${chalk.underline(relPath)}`);
+  greenLog(`File Created [${fileName}]`, `${fileName} created\n@${chalk.underline(relPath)}`);
 }
 
 export function logFileCreationFailure(fileName, relPath, error) {

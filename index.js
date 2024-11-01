@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { log } from 'console';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -13,12 +12,15 @@ import { __dirname, getFileContent, relativePathToProject } from './src/utilitie
 import { returnIfValue, sleep } from './src/utilities/helpers.js';
 import {
   centeredLog,
+  heading,
+  log,
   logf,
   logFileCreation,
   logFileCreationFailure,
   redLog,
   silent,
   successLog,
+  yellowLog,
 } from './src/utilities/logging.js';
 // component related properties
 const COMPONENT = {
@@ -33,9 +35,9 @@ const COMPONENT_DEDFAULT_CONFIG = {
   ADD_CHILDREN_PROPS: false,
   USE_CLIENT_DIRECTIVE: false,
   USE_INLINE_EXPORT: false,
-  CREATE_CSS_FILE: false,
-  CSS_FILE_AS_MODULE: '',
-  CSS_FILE_NAME: `${toLowerCamelCase('Component Name')}`,
+  CREATE_CSS_FILE: true,
+  CSS_FILE_AS_MODULE: true,
+  CSS_FILE_NAME: undefined,
   CREATE_COMPONENT_INDEX: false,
   COMPONENT_FILE_EXTENSION: 'js',
   ADD_X_TO_EXTENSION: false,
@@ -68,19 +70,25 @@ FILE_SYSTEM.config_path = path.join(FILE_SYSTEM.source_dir, configFileName);
 // MAIN
 /////////////////////////////
 async function main() {
-  logf();
-  const [nameTokens, createConfigFile, silentMode] = parseCLI();
+  var lines = process.stdout.getWindowSize()[1];
+  for (var i = 0; i < lines; i++) {
+    console.log('\r\n');
+  }
+
+  const [nameTokens, createConfigFile, silentMode, configOnly] = parseCLI();
 
   if (silentMode) silent();
+  centeredLog(`${chalk.green('  !! ADD COMPONENT !!  ')}\n!! ADD COMPONENT !!\n!! ADD COMPONENT !!`, chalk.gray);
+  log();
 
   const fileCreated = await processConfigFileCreation(createConfigFile);
 
   if (createConfigFile) {
     if (fileCreated) return successLog(`The config file ${configFileName} was added!`);
     else
-      redLog(
-        'Operation Failed [creating config file]',
-        `A config file with the name ${configFileName} already exists!`,
+      yellowLog(
+        'Config file already exists',
+        `The '-a' flag was passed to create a config file\nBut, A config file with the name ${configFileName} already exists!`,
       );
 
     log();
@@ -106,9 +114,12 @@ async function main() {
   // prompt the user for configurations not found in the config.js file
   // startPrompting(globalConfigs (used as default), answers)
   // process.stdout.clearLine();
-  await startPrompting(COMPONENT_CONFIG, COMPONENT_USER_CONFIG);
+  if (!configOnly) await startPrompting(COMPONENT_CONFIG, COMPONENT_USER_CONFIG);
+
+  // log
   log();
   centeredLog(' >> logs <<', chalk.gray);
+
   COMPONENT_CONFIG.COMPONENT_NAME = toUpperCamelCase(COMPONENT_CONFIG.COMPONENT_NAME);
   COMPONENT_CONFIG.CSS_FILE_AS_MODULE = COMPONENT_CONFIG.CSS_FILE_AS_MODULE ? '.module' : '';
 
@@ -117,6 +128,10 @@ async function main() {
     COMPONENT_CONFIG.ADD_X_TO_EXTENSION ? 'x' : ''
   }`;
 
+  COMPONENT_CONFIG.CSS_FILE_NAME = returnIfValue(
+    COMPONENT_CONFIG.CSS_FILE_NAME,
+    toLowerCamelCase(COMPONENT_CONFIG.COMPONENT_NAME),
+  );
   COMPONENT.css = `${COMPONENT_CONFIG.CSS_FILE_NAME}${COMPONENT_CONFIG.CSS_FILE_AS_MODULE}.css`;
 
   FILE_SYSTEM.component_dir = path.join(FILE_SYSTEM.component_root_dir, COMPONENT_CONFIG.COMPONENT_NAME);
@@ -146,13 +161,15 @@ function parseCLI() {
     .argument('[tokens]', 'Name tokens')
     .option('-a, --addConfig', 'Optional name argument')
     .option('-s, --shhh', 'turn off logs')
+    .option('-c, --configOnly', 'skip prompting and only use the config file')
     .parse(process.argv);
 
   const nameTokens = program.args; //
-  const createConfig = program.opts().addConfig;
-  const silentMode = program.opts().shhh;
+  const createConfig = program.opts().addConfig ?? false;
+  const silentMode = program.opts().shhh ?? false;
+  const configOnly = program.opts().configOnly ?? false;
   // console.log(nameTokens, createConfig);
-  return [nameTokens, createConfig ?? false, silentMode ?? false];
+  return [nameTokens, createConfig, silentMode, configOnly];
 }
 
 async function processComponentFileCreation() {
