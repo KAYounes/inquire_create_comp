@@ -2,12 +2,14 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { stdin } from 'process';
 
-import CustomSelectPrompt from './custom.prompts/customSelectPrompt.js';
 import CustomConfirmPrompt from './custom.prompts/customConfirmPrompt.js';
 import CustomInputPrompt from './custom.prompts/customInputPrompt.js';
+import CustomSelectPrompt from './custom.prompts/customSelectPrompt.js';
 
+import { log } from 'console';
 import { isValidFunctionName } from './utilities/checks.js';
 import { toFunctionName, toLowerCamelCase, toMultiLine, toUpperCamelCase } from './utilities/converters.js';
+import { bybassLog, centeredLog, logf } from './utilities/logging.js';
 
 inquirer.registerPrompt('c_input', CustomInputPrompt);
 inquirer.registerPrompt('c_select', CustomSelectPrompt);
@@ -29,9 +31,20 @@ export default async function startPrompting(COMPONENT_CONFIG, answerd) {
 
   stdin.on('data', (key) => {
     if (key === '\u001B') {
-      console.log('\nExiting...');
+      bybassLog(() => {
+        logf('\n\n');
+        centeredLog(` XX Operation Was Cenceled XX\n${chalk.gray("'esc' was pressed")}\n`, chalk.red);
+      });
       process.exit(0);
     }
+  });
+
+  bybassLog(() => {
+    centeredLog(
+      `${chalk.magenta(" !! Use 'Esc' to exit !! ")}\n${chalk.italic.gray('You can quit by pressing the escape key')}`,
+      chalk.gray,
+    );
+    log();
   });
 
   // Prompt for component name first to be used later for other prompts

@@ -3,6 +3,12 @@ import chalk from 'chalk';
 import CustomInputPrompt from './custom.prompts/customInputPrompt.js';
 
 export default async function AYSOverride(componentName) {
+  // await CustomSelectPrompt({
+  //   name: 'foo',
+  //   message: 'fooooo',
+  //   choices: ['1', '2'],
+  // });
+
   const confirm = await AreYourSurePrompt({
     name: 'overriding',
     message: `${chalk.underline('ARE YOU SURE')} you want to override the component [${chalk.underline.magenta(
@@ -12,20 +18,23 @@ export default async function AYSOverride(componentName) {
     loop: false,
     accept: {
       value: true,
-      name: `YESS! I do not need that work anymore.`,
-      description: "Any work in the component's file and its CSS file will be lost",
+      name: `OVERIDE, And Proceed!`,
+      description: ` ${chalk.italic.underline(
+        'Your work will be LOST',
+      )}: Your component's file, index file, and CSS file will be overwritten!`,
     },
     decline: {
       value: false,
-      name: `NOOO! Do not do anything.`,
-      description: "Operation will be cancelled and your work 'should' be safe",
+      name: `Cancel Operation!`,
+      description: 'Component creation will be canceled.',
     },
     default: false,
   });
-
   if (confirm) {
     const final = await CustomInputPrompt({
-      message: `Enter the name of the component to confirm ${componentName}`,
+      message: chalk.yellow.italic(
+        `Enter the name of the component to confirm [${chalk.underline.magenta(componentName)}]`,
+      ),
       validate: function (input) {
         return input === componentName
           ? true
@@ -35,6 +44,5 @@ export default async function AYSOverride(componentName) {
     });
     return final;
   }
-
   return confirm;
 }

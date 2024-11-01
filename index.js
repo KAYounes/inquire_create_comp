@@ -1,31 +1,25 @@
 #!/usr/bin/env node
-import startPrompting from './src/prompt.js';
-import { toLowerCamelCase, toUpperCamelCase } from './src/utilities/converters.js';
+import chalk from 'chalk';
+import { Command } from 'commander';
+import { log } from 'console';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import AYSOverride from './src/AYSOverride.js';
-import { __dirname, getFileContent, relativePathToProject } from './src/utilities/file.system.js';
 import { pathToFileURL } from 'url';
-import chalk from 'chalk';
-import { Command } from 'commander';
-import { returnIfValue } from './src/utilities/helpers.js';
+import AYSOverride from './src/AYSOverride.js';
+import startPrompting from './src/prompt.js';
+import { toLowerCamelCase, toUpperCamelCase } from './src/utilities/converters.js';
+import { __dirname, getFileContent, relativePathToProject } from './src/utilities/file.system.js';
+import { returnIfValue, sleep } from './src/utilities/helpers.js';
 import {
   centeredLog,
-  greenLog,
-  infoLog,
+  logf,
   logFileCreation,
   logFileCreationFailure,
-  logMessage,
   redLog,
   silent,
   successLog,
-  terminationLog,
-  warnLog,
 } from './src/utilities/logging.js';
-import figures from '@inquirer/figures';
-import { info, log } from 'console';
-import AreYourSurePrompt from './src/custom.prompts/areYouSurePrompt.js';
 // component related properties
 const COMPONENT = {
   palceholder: 'COMPONENT_NAME',
@@ -74,6 +68,7 @@ FILE_SYSTEM.config_path = path.join(FILE_SYSTEM.source_dir, configFileName);
 // MAIN
 /////////////////////////////
 async function main() {
+  logf();
   const [nameTokens, createConfigFile, silentMode] = parseCLI();
 
   if (silentMode) silent();
@@ -87,6 +82,9 @@ async function main() {
         'Operation Failed [creating config file]',
         `A config file with the name ${configFileName} already exists!`,
       );
+
+    log();
+    await sleep(500);
   }
 
   // get user configurations from config file
@@ -100,13 +98,14 @@ async function main() {
 
   COMPONENT_CONFIG.COMPONENT_NAME = returnIfValue(nameTokens.join(' '), COMPONENT_CONFIG.COMPONENT_NAME);
 
-  centeredLog(
-    ` >> How do you like your component? <<\n${chalk.yellow(`(answers in ${configFileName} are skipped)`)}`,
-    chalk.green,
-  );
+  // centeredLog(
+  //   ` >> How do you like your component? <<\n${chalk.yellow(`(answers in ${configFileName} are skipped)`)}`,
+  //   chalk.green,
+  // );
 
   // prompt the user for configurations not found in the config.js file
   // startPrompting(globalConfigs (used as default), answers)
+  // process.stdout.clearLine();
   await startPrompting(COMPONENT_CONFIG, COMPONENT_USER_CONFIG);
   log();
   centeredLog(' >> logs <<', chalk.gray);
@@ -125,13 +124,18 @@ async function main() {
   FILE_SYSTEM.component_css_path = path.join(FILE_SYSTEM.component_dir, COMPONENT.css);
   FILE_SYSTEM.component_index_path = path.join(FILE_SYSTEM.component_dir, 'index.js');
 
-  processComponentFileCreation();
-  if (COMPONENT_CONFIG.CREATE_COMPONENT_INDEX) processIndexFileCreation();
-  if (COMPONENT_CONFIG.CREATE_CSS_FILE) processCSSFileCreation();
-  centeredLog(chalk.green.dim.italic('finito'), chalk.gray);
+  const proceed = await processComponentFileCreation();
+  if (proceed) {
+    if (COMPONENT_CONFIG.CREATE_COMPONENT_INDEX) processIndexFileCreation();
+    if (COMPONENT_CONFIG.CREATE_CSS_FILE) processCSSFileCreation();
+  }
+  centeredLog(chalk.green.dim.italic(' ____ finito ____ '), chalk.gray);
+  logf();
 }
 
 main();
+
+process.stdin.pause();
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,32 +197,15 @@ async function processComponentFileCreation() {
       fs.mkdirSync(FILE_SYSTEM.component_root_dir);
     }
     if (fs.existsSync(FILE_SYSTEM.component_dir)) {
-      const confirm = await AreYourSurePrompt({
-        name: 'overriding',
-        message: `${chalk.underline('ARE YOU SURE')} you want to override the component [${chalk.underline.magenta(
-          COMPONENT_CONFIG.COMPONENT_NAME,
-        )}]`,
-        delay: 2000,
-        loop: false,
-        accept: {
-          value: true,
-          name: `YESS! I do not need that work anymore.`,
-          description: "Any work in the component's file and its CSS file will be lost",
-        },
-        decline: {
-          value: false,
-          name: `NOOO! Do not do anything.`,
-          description: "Operation will be cancelled and your work 'should' be safe",
-        },
-        default: false,
-      });
-      if (!confirm) return;
+      const confirm = await AYSOverride(COMPONENT_CONFIG.COMPONENT_NAME);
+      if (!confirm) return false;
     } else {
       fs.mkdirSync(FILE_SYSTEM.component_dir);
     }
 
     fs.writeFileSync(dest, newContent, 'utf-8');
     logFileCreation(fileName, relativePathToProject(FILE_SYSTEM.source_dir, dest));
+    return true;
   } catch (error) {
     logFileCreationFailure(fileName, relativePathToProject(FILE_SYSTEM.source_dir, dest), error.message);
   }

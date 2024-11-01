@@ -17,6 +17,18 @@ export function log(...args) {
   console.log(...args);
 }
 
+export function logf(...args) {
+  // forced log
+  console.log(...args);
+}
+
+export function bybassLog(f) {
+  const prevState = logDisabled;
+  logDisabled = false;
+  f();
+  logDisabled = prevState;
+}
+
 export function notifyLogDisabled() {
   if (!logDisabled) return;
   log();
@@ -33,7 +45,7 @@ export function centeredLog(message, color = I) {
   const lines = coloredMessage.split('\n');
 
   if (typeof color !== 'function') color = I;
-  const remaining = (terminalWidth - lines[0].length) / 2;
+  const remaining = (terminalWidth - removeChalk(lines[0]).length) / 2;
   let sides = '-'.repeat(remaining);
   log(color(sides) + color(lines[0]) + color(sides));
 
@@ -83,6 +95,7 @@ export function greenLog(title, message) {
 }
 
 export function logFileCreation(fileName, relPath) {
+  log();
   greenLog(`File Created [${fileName}]`, `${fileName} created > ${chalk.underline(relPath)}`);
 }
 

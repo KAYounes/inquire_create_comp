@@ -89,7 +89,6 @@ let renders = 0;
 
 const AreYourSurePrompt = createPrompt(function (config, done) {
   renders += 1;
-  // console.log(renders);
   const { loop = true, pageSize = 7 } = config;
   const firstRender = useRef(true);
   // defualtTheme.spinner.interval = 10;
